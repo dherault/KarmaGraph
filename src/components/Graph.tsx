@@ -3,6 +3,7 @@ import { Div, MenuItem, Select } from 'honorable'
 import * as vis from 'vis-network'
 import cloneDeep from 'lodash.clonedeep'
 
+import { NodeType } from '../types'
 import graphNameToGraph from '../graphs'
 
 import StepsContext from '../contexts/StepsContext'
@@ -10,11 +11,29 @@ import StepsContext from '../contexts/StepsContext'
 import Processor from './Processor'
 import Executor from './Executor'
 
-const options = {}
+const options = {
+  physics: {
+    barnesHut: {
+      enabled: true,
+      gravitationalConstant: -2000,
+      centralGravity: 0.1,
+      springLength: 200,
+      springConstant: 0.05,
+      damping: 0.09,
+    },
+    repulsion: {
+      centralGravity: 0.1,
+      springLength: 50,
+      springConstant: 0.05,
+      nodeDistance: 100,
+      damping: 0.09,
+    },
+  },
+}
 
-function formatKarma(karma: Record<string, number>) {
+function formatKarma(node: NodeType) {
   let result = ''
-  const entries = Object.entries(karma)
+  const entries = Object.entries(node.karma).sort(a => a[0] === node.id ? -1 : 1)
 
   entries.forEach(([key, value], i) => {
     result += `${key}: ${value}`
@@ -47,7 +66,7 @@ function Graph() {
     const nextGraph = cloneDeep(graph)
 
     nextGraph.nodes.forEach(node => {
-      node.label = `${node.id} ~ ${node.being} ~ ${formatKarma(node.karma)}`
+      node.label = `${node.id}\n${formatKarma(node)}`
     })
 
     return nextGraph

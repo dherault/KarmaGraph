@@ -20,8 +20,8 @@ function Executor({ graph, selectedNodeId }: ExecutorProps) {
     if (fromKarma < cost) return false
 
     fromNode.karma[fromNode.id] -= cost
-    fromNode.karma[toNode.id] -= cost
-    toNode.karma[fromNode.id] += cost
+    fromNode.karma[toNode.id] += cost
+    toNode.karma[fromNode.id] -= cost
     toNode.karma[toNode.id] += cost
     goalNode.being = fun(goalNode.being)
 
@@ -54,8 +54,14 @@ function Executor({ graph, selectedNodeId }: ExecutorProps) {
     }
     else {
       console.log('Not enough Karma, transaction aborted')
+
+      return
     }
-  }, [graph, selectedNodeId, steps, currentStepIndex, setCurrentStepIndex, executePsy])
+
+    const result = goalNode.being
+
+    setSteps(steps => steps.map((s, i) => i === currentStepIndex ? { ...s, result } : s))
+  }, [graph, selectedNodeId, steps, setSteps, currentStepIndex, setCurrentStepIndex, executePsy])
 
   const resetSteps = useCallback(() => {
     setCurrentStepIndex(0)

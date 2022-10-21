@@ -1,4 +1,4 @@
-import { Button, Div } from 'honorable'
+import { Button } from 'honorable'
 import { useCallback, useContext } from 'react'
 
 import StepsContext from '../contexts/StepsContext'
