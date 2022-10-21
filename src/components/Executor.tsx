@@ -1,17 +1,21 @@
 import { Button, Div } from 'honorable'
+import cloneDeep from 'lodash.clonedeep'
 import { useCallback, useContext } from 'react'
 
+import GraphContext from '../contexts/GraphContext'
 import StepsContext from '../contexts/StepsContext'
+import TransactionContext from '../contexts/TransactionContext'
+import IsKarmicDepletionContext from '../contexts/IsKarmicDepletionContext'
 
-import { GraphType, NodeType, PsyType } from '../types'
+import formatGraph from '../helpers/formatGraph'
 
-type ExecutorProps = {
-  graph: GraphType
-  selectedNodeId: string
-}
+import { NodeType, PsyType } from '../types'
 
-function Executor({ graph, selectedNodeId }: ExecutorProps) {
+function Executor() {
+  const { graph, setGraph } = useContext(GraphContext)
+  const { fromNodeId } = useContext(TransactionContext)
   const { steps, setSteps, currentStepIndex, setCurrentStepIndex } = useContext(StepsContext)
+  const { setIsKarmicDepletion } = useContext(IsKarmicDepletionContext)
 
   const executePsy = useCallback((goalNode: NodeType, fromNode: NodeType, toNode: NodeType, psy: PsyType) => {
     const { cost, fun } = psy
@@ -33,27 +37,32 @@ function Executor({ graph, selectedNodeId }: ExecutorProps) {
 
     if (!step) return
 
-    const goalNode = graph.nodes.find(n => n.id === selectedNodeId)
+    const nextGraph = cloneDeep(graph)
+    const goalNode = nextGraph.nodes.find(n => n.id === fromNodeId)
 
     if (!goalNode) return
 
     const { from, to, psy } = step
 
-    const fromNode = graph.nodes.find(n => n.id === from)
+    const fromNode = nextGraph.nodes.find(n => n.id === from)
 
     if (!fromNode) return
 
-    const toNode = graph.nodes.find(n => n.id === to)
+    const toNode = nextGraph.nodes.find(n => n.id === to)
 
     if (!toNode) return
 
     const success = executePsy(goalNode, fromNode, toNode, psy)
 
+    console.log('nextGraph', nextGraph)
+
     if (success) {
+      setGraph(formatGraph(nextGraph))
       setCurrentStepIndex(currentStepIndex + 1)
+      setIsKarmicDepletion(false)
     }
     else {
-      console.log('Not enough Karma, transaction aborted')
+      setIsKarmicDepletion(true)
 
       return
     }
@@ -61,11 +70,11 @@ function Executor({ graph, selectedNodeId }: ExecutorProps) {
     const result = goalNode.being
 
     setSteps(steps => steps.map((s, i) => i === currentStepIndex ? { ...s, result } : s))
-  }, [graph, selectedNodeId, steps, setSteps, currentStepIndex, setCurrentStepIndex, executePsy])
+  }, [graph, setGraph, setIsKarmicDepletion, fromNodeId, steps, setSteps, currentStepIndex, setCurrentStepIndex, executePsy])
 
   const resetSteps = useCallback(() => {
     setCurrentStepIndex(0)
-    setSteps([])
+    setSteps(steps => steps.map(s => ({ ...s, result: '' })))
   }, [setCurrentStepIndex, setSteps])
 
   return (
