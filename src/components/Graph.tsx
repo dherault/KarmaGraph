@@ -1,14 +1,13 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Div, MenuItem, Select } from 'honorable'
 import * as vis from 'vis-network'
 import cloneDeep from 'lodash.clonedeep'
 
-import { NodeType } from '../types'
+import { NodeType, PsyType, StepsType } from '../types'
 import graphNameToGraph from '../graphs'
 
 import StepsContext from '../contexts/StepsContext'
 
-import Processor from './Processor'
 import Executor from './Executor'
 
 const options = {
@@ -46,7 +45,7 @@ function formatKarma(node: NodeType) {
 
 function Graph() {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { currentStepIndex } = useContext(StepsContext)
+  const { currentStepIndex, setSteps } = useContext(StepsContext)
   const [network, setNetwork] = useState<vis.Network | null>(null)
   const [graphName, setGraphName] = useState('Two individuals')
   const [selectedFromNodeId, setSelectedFromNodeId] = useState<string>('')
@@ -72,6 +71,48 @@ function Graph() {
     return nextGraph
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [graph, currentStepIndex])
+
+  const addSteps = useCallback((steps: StepsType, fromNodeId: string, toNodeId: string, psy: PsyType) => {
+    const { id, composition } = psy
+
+    composition.forEach(composable => {
+      const [nodeId, psyId] = composable.split(':')
+
+      const node = graph.nodes.find(n => n.id === nodeId)
+
+      if (!node) return
+
+      const psy = node.psys.find(p => p.id === psyId)
+
+      if (!psy) return
+
+      addSteps(steps, toNodeId, nodeId, psy)
+    })
+
+    steps.unshift({
+      label: id,
+      from: fromNodeId,
+      to: toNodeId,
+      psy,
+      result: '',
+    })
+  }, [graph])
+
+  const load = useCallback(() => {
+    if (!selectedToNode) return
+
+    const psy = selectedToNode.psys.find(p => p.id === selectedPsyId)
+
+    if (!psy) return
+
+    const steps: StepsType = []
+
+    addSteps(steps, selectedFromNodeId, selectedToNode.id, psy)
+
+    console.log('steps', steps)
+
+    setSteps(steps)
+  }, [selectedFromNodeId, selectedToNode, selectedPsyId, addSteps, setSteps])
 
   useEffect(() => {
     if (!graph) return
@@ -113,6 +154,10 @@ function Graph() {
 
     network.setData(graphWithMetadata)
   }, [network, graphWithMetadata])
+
+  useEffect(() => {
+    load()
+  }, [load])
 
   return (
     <Div
@@ -192,12 +237,6 @@ function Graph() {
             ))}
           </Select>
         )}
-        <Processor
-          graph={graph}
-          fromNodeId={selectedFromNodeId}
-          toNodeId={selectedToNodeId}
-          psyId={selectedPsyId}
-        />
       </Div>
       <Executor
         graph={graph}
