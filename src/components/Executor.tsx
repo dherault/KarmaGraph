@@ -33,14 +33,14 @@ function Executor() {
 
     if (!isKarmicDeptAllowed && (fromNode.karma[alterNodeId] < cost || toNode.karma[fromNode.id] < cost)) return false
 
+    // Effectuate
+    goalNode.being = fun(goalNode.being) // The cost should be returned by the psy function
     // Give
     fromNode.karma[alterNodeId] -= cost
     toNode.karma[alterNodeId] += cost
     // Take
     fromNode.karma[toNode.id] += cost
     toNode.karma[fromNode.id] -= cost
-    // Effectuate
-    goalNode.being = fun(goalNode.being)
 
     return true
   }, [thirdNodeId, isKarmicDeptAllowed])
