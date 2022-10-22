@@ -27,9 +27,6 @@ function Executor() {
 
     if (!isKarmicDeptAllowed && (fromNode.karma[alterNodeId] < cost || toNode.karma[fromNode.id] < cost)) return false
 
-    // console.log('alterNodeId', alterNodeId)
-    // console.log('toNode.karma[alterNodeId]', toNode.karma[alterNodeId], toNode.karma)
-
     // Give
     fromNode.karma[alterNodeId] -= cost
     toNode.karma[alterNodeId] += cost
@@ -38,8 +35,6 @@ function Executor() {
     toNode.karma[fromNode.id] -= cost
     // Effectuate
     goalNode.being = fun(goalNode.being)
-
-    // console.log('toNode.karma[alterNodeId]', toNode.karma[alterNodeId], toNode.karma)
 
     return true
   }, [thirdNodeId, isKarmicDeptAllowed])
