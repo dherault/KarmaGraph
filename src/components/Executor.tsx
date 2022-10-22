@@ -15,12 +15,18 @@ import { NodeType, PsyType } from '../types'
 import KarmicDepletionWarning from './KarmicDepletionWarning'
 
 function Executor() {
+  /* --
+    * CONTEXTS
+  -- */
   const { graph, setGraph } = useContext(GraphContext)
   const { fromNodeId, thirdNodeId } = useContext(TransactionContext)
   const { steps, setSteps, currentStepIndex, setCurrentStepIndex } = useContext(StepsContext)
   const { isKarmicDeptAllowed } = useContext(IsKarmicDeptAllowedContext)
   const { setIsKarmicDepletion } = useContext(IsKarmicDepletionContext)
 
+  /* --
+    * HANDLERS
+  -- */
   const executePsy = useCallback((goalNode: NodeType, fromNode: NodeType, toNode: NodeType, psy: PsyType) => {
     const { cost, fun } = psy
     const alterNodeId = thirdNodeId || fromNode.id
@@ -79,6 +85,9 @@ function Executor() {
     setSteps(steps => steps.map(s => ({ ...s, result: '' })))
   }, [setCurrentStepIndex, setSteps])
 
+  /* --
+    * RETURN
+  -- */
   return (
     <Div
       position="absolute"
