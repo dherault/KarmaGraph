@@ -56,7 +56,7 @@ function TransactionSelector({ connectedNodes, toNode }: TransactionSelectorProp
               key={node.id}
               value={node.id}
             >
-              {node.label}
+              {node.id}
             </MenuItem>
           ))}
         </Select>

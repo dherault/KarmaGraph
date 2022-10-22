@@ -54,7 +54,7 @@ function Executor() {
 
     const success = executePsy(goalNode, fromNode, toNode, psy)
 
-    console.log('nextGraph', nextGraph)
+    // console.log('nextGraph', nextGraph)
 
     if (success) {
       setGraph(formatGraph(nextGraph))

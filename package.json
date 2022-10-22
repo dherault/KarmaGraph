@@ -22,20 +22,14 @@
     "vis-network": "^9.1.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.19.6",
-    "@babel/eslint-parser": "^7.19.1",
-    "@babel/preset-env": "^7.19.4",
-    "@babel/preset-react": "^7.18.6",
     "@types/lodash.clonedeep": "^4.5.7",
     "@types/node": "^18.11.3",
-    "@types/react": "^18.0.17",
+    "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
-    "@typescript-eslint/eslint-plugin": "^5.40.1",
-    "@typescript-eslint/parser": "^5.40.1",
     "@vitejs/plugin-react": "^2.1.0",
-    "eslint": "^8.25.0",
-    "eslint-config-dherault": "^1.7.4",
+    "eslint": "^8.26.0",
+    "eslint-config-dherault-typescript": "^1.0.0",
     "typescript": "^4.8.4",
-    "vite": "^3.1.0"
+    "vite": "^3.1.8"
   }
 }
