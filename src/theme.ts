@@ -171,5 +171,11 @@ export default mergeTheme(defaultTheme, {
         backgroundColor: 'grey.100',
       },
     ],
+    // TODO in honorable
+    Handle: [
+      ({ disabled }: any) => disabled && {
+        backgroundColor: 'grey.50',
+      },
+    ],
   },
 })

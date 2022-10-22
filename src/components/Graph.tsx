@@ -11,7 +11,7 @@ import GraphContext, { GraphContextType } from '../contexts/GraphContext'
 import StepsContext, { StepsContextType } from '../contexts/StepsContext'
 import TransactionContext, { TransactionContextType } from '../contexts/TransactionContext'
 import IsKarmicDeptAllowedContext, { IsKarmicDeptAllowedContextType } from '../contexts/IsKarmicDeptAllowedContext'
-import IsKarmicThirdPartyTransactionAllowedContext, { IsKarmicThirdPartyTransactionAllowedContextType } from '../contexts/IsKarmicThirdPartyTransactionAllowedContext'
+import ShouldUseKarmicThirdPArtyTransaction, { ShouldUseKarmicThirdPartyTransactionContextType } from '../contexts/ShouldUseKarmicThirdPartyTransactionContext'
 import IsKarmicDepletionContext, { IsKarmicDepletionContextType } from '../contexts/IsKarmicDepletionContext'
 
 import formatGraph from '../helpers/formatGraph'
@@ -19,7 +19,6 @@ import formatGraph from '../helpers/formatGraph'
 import TransactionSelector from './TransactionSelector'
 import Executor from './Executor'
 import KarmaMatrixModal from './KarmaMatrixModal'
-import KarmicDepletionWarning from './KarmicDepletionWarning'
 
 const options = {
   physics: {
@@ -51,11 +50,12 @@ function Graph() {
   const [unchangedGraph, setUnchangedGraph] = useState(cloneDeep(graph))
   const [fromNodeId, setFromNodeId] = useState<string>('')
   const [toNodeId, setToNodeId] = useState<string>('')
+  const [thirdNodeId, setThirdNodeId] = useState<string>('')
   const [psyId, setPsyId] = useState<string>('')
   const [steps, setSteps] = useState<StepsType>([])
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [isKarmicDeptAllowed, setIsKarmicDeptAllowed] = useState(false)
-  const [isKarmicThirdPartyTransactionAllowed, setIsKarmicThirdPartyTransactionAllowed] = useState(true)
+  const [shouldUseKarmicThirdPartyTransaction, setShouldUseKarmicThirdPartyTransaction] = useState(true)
   const [isKarmicDepletion, setIsKarmicDepletion] = useState(false)
   const [isKarmaMatrixModalOpen, setIsKarmaMatrixModalOpen] = useState(false)
 
@@ -68,12 +68,14 @@ function Graph() {
     setFromNodeId,
     toNodeId,
     setToNodeId,
+    thirdNodeId,
+    setThirdNodeId,
     psyId,
     setPsyId,
-  }), [fromNodeId, toNodeId, psyId])
+  }), [fromNodeId, toNodeId, thirdNodeId, psyId])
   const stepsContextValue = useMemo<StepsContextType>(() => ({ steps, setSteps, currentStepIndex, setCurrentStepIndex }), [steps, currentStepIndex])
   const isKarmicDeptAllowedContextValue = useMemo<IsKarmicDeptAllowedContextType>(() => ({ isKarmicDeptAllowed, setIsKarmicDeptAllowed }), [isKarmicDeptAllowed])
-  const isKarmicThirdPartyTransactionAllowedContextValue = useMemo<IsKarmicThirdPartyTransactionAllowedContextType>(() => ({ isKarmicThirdPartyTransactionAllowed, setIsKarmicThirdPartyTransactionAllowed }), [isKarmicThirdPartyTransactionAllowed])
+  const shouldUseKarmicThirdPartyTransactionContextValue = useMemo<ShouldUseKarmicThirdPartyTransactionContextType>(() => ({ shouldUseKarmicThirdPartyTransaction, setShouldUseKarmicThirdPartyTransaction }), [shouldUseKarmicThirdPartyTransaction])
   const isKarmicDepletionContextValue = useMemo<IsKarmicDepletionContextType>(() => ({ isKarmicDepletion, setIsKarmicDepletion }), [isKarmicDepletion])
 
   /* --
@@ -179,6 +181,12 @@ function Graph() {
   }, [graph, toNodeId])
 
   useEffect(() => {
+    if (graph.nodes.length < 3) {
+      setShouldUseKarmicThirdPartyTransaction(false)
+    }
+  }, [graph])
+
+  useEffect(() => {
     if (!containerRef.current) return
 
     setNetwork(new vis.Network(containerRef.current, graph, options))
@@ -189,6 +197,7 @@ function Graph() {
     if (!network) return
 
     network.setData(graph)
+    setIsKarmicDepletion(false)
   }, [network, graph])
 
   /* --
@@ -199,7 +208,7 @@ function Graph() {
       <TransactionContext.Provider value={transactionContextValue}>
         <StepsContext.Provider value={stepsContextValue}>
           <IsKarmicDeptAllowedContext.Provider value={isKarmicDeptAllowedContextValue}>
-            <IsKarmicThirdPartyTransactionAllowedContext.Provider value={isKarmicThirdPartyTransactionAllowedContextValue}>
+            <ShouldUseKarmicThirdPArtyTransaction.Provider value={shouldUseKarmicThirdPartyTransactionContextValue}>
               <IsKarmicDepletionContext.Provider value={isKarmicDepletionContextValue}>
                 <Div
                   postion="relative"
@@ -247,12 +256,14 @@ function Graph() {
                       xflex="y11"
                       gap={1}
                     >
-                      <Switch
-                        checked={isKarmicThirdPartyTransactionAllowed}
-                        onChange={event => setIsKarmicThirdPartyTransactionAllowed(event.target.checked)}
-                      >
-                        Allow 3rd party transactions
-                      </Switch>
+                      {graph.nodes.length >= 3 && (
+                        <Switch
+                          checked={shouldUseKarmicThirdPartyTransaction}
+                          onChange={event => setShouldUseKarmicThirdPartyTransaction(event.target.checked)}
+                        >
+                          Use 3rd party for next transaction
+                        </Switch>
+                      )}
                       <Switch
                         checked={isKarmicDeptAllowed}
                         onChange={event => setIsKarmicDeptAllowed(event.target.checked)}
@@ -266,14 +277,13 @@ function Graph() {
                     toNode={toNode}
                   />
                   <Executor />
-                  <KarmicDepletionWarning />
                 </Div>
                 <KarmaMatrixModal
                   open={isKarmaMatrixModalOpen}
                   onClose={() => setIsKarmaMatrixModalOpen(false)}
                 />
               </IsKarmicDepletionContext.Provider>
-            </IsKarmicThirdPartyTransactionAllowedContext.Provider>
+            </ShouldUseKarmicThirdPArtyTransaction.Provider>
           </IsKarmicDeptAllowedContext.Provider>
         </StepsContext.Provider>
       </TransactionContext.Provider>

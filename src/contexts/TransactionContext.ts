@@ -5,6 +5,8 @@ export type TransactionContextType = {
   setFromNodeId: Dispatch<SetStateAction<string>>
   toNodeId: string
   setToNodeId: Dispatch<SetStateAction<string>>
+  thirdNodeId: string
+  setThirdNodeId: Dispatch<SetStateAction<string>>
   psyId: string
   setPsyId: Dispatch<SetStateAction<string>>
 }
@@ -14,6 +16,8 @@ export default createContext<TransactionContextType>({
   setFromNodeId: () => {},
   toNodeId: '',
   setToNodeId: () => {},
+  thirdNodeId: '',
+  setThirdNodeId: () => {},
   psyId: '',
   setPsyId: () => {},
 })

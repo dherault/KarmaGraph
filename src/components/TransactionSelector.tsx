@@ -1,7 +1,8 @@
 import { Div, MenuItem, Select } from 'honorable'
-import { useContext } from 'react'
+import { useContext, useEffect } from 'react'
 
 import GraphContext from '../contexts/GraphContext'
+import ShouldUseKarmicThirdPartyTransactionContext from '../contexts/ShouldUseKarmicThirdPartyTransactionContext'
 
 import TransactionContext from '../contexts/TransactionContext'
 import { NodeType } from '../types'
@@ -18,9 +19,21 @@ function TransactionSelector({ connectedNodes, toNode }: TransactionSelectorProp
     setFromNodeId,
     toNodeId,
     setToNodeId,
+    thirdNodeId,
+    setThirdNodeId,
     psyId,
     setPsyId,
   } = useContext(TransactionContext)
+  const { shouldUseKarmicThirdPartyTransaction } = useContext(ShouldUseKarmicThirdPartyTransactionContext)
+
+  useEffect(() => {
+    if (shouldUseKarmicThirdPartyTransaction) {
+      setThirdNodeId(graph.nodes.filter(n => n.id !== fromNodeId && n.id !== toNodeId)[0]?.id || '')
+    }
+    else {
+      setThirdNodeId('')
+    }
+  }, [shouldUseKarmicThirdPartyTransaction, graph, fromNodeId, toNodeId, setThirdNodeId])
 
   return (
     <Div
@@ -73,6 +86,24 @@ function TransactionSelector({ connectedNodes, toNode }: TransactionSelectorProp
               value={psy.id}
             >
               {psy.id}
+            </MenuItem>
+          ))}
+        </Select>
+      )}
+      {shouldUseKarmicThirdPartyTransaction && (
+        <Select
+          value={thirdNodeId}
+          onChange={event => setThirdNodeId(event.target.value)}
+          width={64}
+        >
+          {Object.values(graph.nodes)
+          .filter(node => node.id !== fromNodeId && node.id !== toNodeId)
+          .map(node => (
+            <MenuItem
+              key={node.id}
+              value={node.id}
+            >
+              {node.id}
             </MenuItem>
           ))}
         </Select>
