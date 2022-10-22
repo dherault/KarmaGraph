@@ -8,7 +8,7 @@ const graphs: Record<string, GraphType> = {
         label: 'A',
         karma: {
           A: 16,
-          B: 0,
+          B: 16,
         },
         being: 'A',
         psys: [
@@ -25,7 +25,7 @@ const graphs: Record<string, GraphType> = {
         label: 'B',
         karma: {
           B: 16,
-          A: 0,
+          A: 16,
         },
         being: 'B',
         psys: [
@@ -58,8 +58,8 @@ const graphs: Record<string, GraphType> = {
         label: 'A',
         karma: {
           A: 16,
-          B: 0,
-          C: 0,
+          B: 8,
+          C: 8,
         },
         being: 'A',
         psys: [
@@ -75,9 +75,9 @@ const graphs: Record<string, GraphType> = {
         id: 'B',
         label: 'B',
         karma: {
-          A: 0,
+          A: 8,
           B: 16,
-          C: 0,
+          C: 8,
         },
         being: 'B',
         psys: [
@@ -93,8 +93,8 @@ const graphs: Record<string, GraphType> = {
         id: 'C',
         label: 'C',
         karma: {
-          A: 0,
-          B: 0,
+          A: 8,
+          B: 8,
           C: 16,
         },
         being: 'C',
@@ -148,8 +148,8 @@ const graphs: Record<string, GraphType> = {
         label: 'A',
         karma: {
           A: 16,
-          B: 0,
-          C: 0,
+          B: 8,
+          C: 8,
         },
         being: 'A',
         psys: [
@@ -165,9 +165,9 @@ const graphs: Record<string, GraphType> = {
         id: 'B',
         label: 'B',
         karma: {
-          A: 0,
+          A: 8,
           B: 16,
-          C: 0,
+          C: 8,
         },
         being: 'B',
         psys: [
@@ -183,8 +183,8 @@ const graphs: Record<string, GraphType> = {
         id: 'C',
         label: 'C',
         karma: {
-          A: 0,
-          B: 0,
+          A: 8,
+          B: 8,
           C: 16,
         },
         being: 'C',
@@ -228,8 +228,8 @@ const graphs: Record<string, GraphType> = {
         label: 'A',
         karma: {
           A: 16,
-          B: 0,
-          C: 0,
+          B: 8,
+          C: 8,
         },
         being: 'A',
         psys: [
@@ -245,9 +245,9 @@ const graphs: Record<string, GraphType> = {
         id: 'B',
         label: 'B',
         karma: {
-          A: 0,
+          A: 8,
           B: 16,
-          C: 0,
+          C: 8,
         },
         being: 'B',
         psys: [
@@ -263,8 +263,8 @@ const graphs: Record<string, GraphType> = {
         id: 'C',
         label: 'C',
         karma: {
-          A: 0,
-          B: 0,
+          A: 8,
+          B: 8,
           C: 16,
         },
         being: 'C',
