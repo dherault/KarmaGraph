@@ -4,11 +4,11 @@ import * as vis from 'vis-network'
 
 import cloneDeep from 'lodash.clonedeep'
 
-import { PsyType, StepsType } from '../types'
+import { TransactionCohortType, TransactionType } from '../types'
 import graphNameToGraph from '../graphs'
 
 import GraphContext, { GraphContextType } from '../contexts/GraphContext'
-import StepsContext, { StepsContextType } from '../contexts/StepsContext'
+import TransactionCohort, { TransactionCohortContextType } from '../contexts/TransactionCohortContext'
 import TransactionContext, { TransactionContextType } from '../contexts/TransactionContext'
 import IsKarmicDeptAllowedContext, { IsKarmicDeptAllowedContextType } from '../contexts/IsKarmicDeptAllowedContext'
 import ShouldUseKarmicThirdPArtyTransaction, { ShouldUseKarmicThirdPartyTransactionContextType } from '../contexts/ShouldUseKarmicThirdPartyTransactionContext'
@@ -52,8 +52,8 @@ function Graph() {
   const [toNodeId, setToNodeId] = useState<string>('')
   const [thirdNodeId, setThirdNodeId] = useState<string>('')
   const [psyId, setPsyId] = useState<string>('')
-  const [steps, setSteps] = useState<StepsType>([])
-  const [currentStepIndex, setCurrentStepIndex] = useState(0)
+  const [transactionCohort, setTransactionCohort] = useState<TransactionCohortType>([])
+  const [currentTransactionIndex, setCurrentTransactionIndex] = useState(0)
   const [isKarmicDeptAllowed, setIsKarmicDeptAllowed] = useState(false)
   const [shouldUseKarmicThirdPartyTransaction, setShouldUseKarmicThirdPartyTransaction] = useState(true)
   const [isKarmicDepletion, setIsKarmicDepletion] = useState(false)
@@ -73,7 +73,7 @@ function Graph() {
     psyId,
     setPsyId,
   }), [fromNodeId, toNodeId, thirdNodeId, psyId])
-  const stepsContextValue = useMemo<StepsContextType>(() => ({ steps, setSteps, currentStepIndex, setCurrentStepIndex }), [steps, currentStepIndex])
+  const transactionCohortContextValue = useMemo<TransactionCohortContextType>(() => ({ transactionCohort, setTransactionCohort, currentTransactionIndex, setCurrentTransactionIndex }), [transactionCohort, currentTransactionIndex])
   const isKarmicDeptAllowedContextValue = useMemo<IsKarmicDeptAllowedContextType>(() => ({ isKarmicDeptAllowed, setIsKarmicDeptAllowed }), [isKarmicDeptAllowed])
   const shouldUseKarmicThirdPartyTransactionContextValue = useMemo<ShouldUseKarmicThirdPartyTransactionContextType>(() => ({ shouldUseKarmicThirdPartyTransaction, setShouldUseKarmicThirdPartyTransaction }), [shouldUseKarmicThirdPartyTransaction])
   const isKarmicDepletionContextValue = useMemo<IsKarmicDepletionContextType>(() => ({ isKarmicDepletion, setIsKarmicDepletion }), [isKarmicDepletion])
@@ -94,44 +94,39 @@ function Graph() {
   /* --
     * HELPERS
   -- */
-  const addSteps = useCallback((steps: StepsType, fromNodeId: string, toNodeId: string, psy: PsyType) => {
-    const { id, composition } = psy
+  const createTransactions = useCallback((fromNodeId: string, toNodeId: string, psyId: string) => {
+    const transactions: TransactionType[] = []
+    const toNode = unchangedGraph.nodes.find(n => n.id === toNodeId)
 
-    composition.forEach(composable => {
-      const [nodeId, psyId] = composable.split(':')
-
-      const node = unchangedGraph.nodes.find(n => n.id === nodeId)
-
-      if (!node) return
-
-      const psy = node.psys.find(p => p.id === psyId)
-
-      if (!psy) return
-
-      addSteps(steps, toNodeId, nodeId, psy)
-    })
-
-    steps.unshift({
-      label: id,
-      from: fromNodeId,
-      to: toNodeId,
-      psy,
-      result: '',
-    })
-  }, [unchangedGraph])
-
-  const load = useCallback(() => {
-    if (!toNode) return
+    if (!toNode) return transactions
 
     const psy = toNode.psys.find(p => p.id === psyId)
 
-    if (!psy) return
+    if (!psy) return transactions
 
-    const steps: StepsType = []
+    psy.composition.forEach(composable => {
+      const [nodeId, psyId] = composable.split(':')
 
-    addSteps(steps, fromNodeId, toNode.id, psy)
-    setSteps(steps)
-  }, [fromNodeId, toNode, psyId, addSteps])
+      transactions.push(...createTransactions(toNodeId, nodeId, psyId))
+    })
+
+    transactions.unshift({
+      id: Math.random().toString().slice(2),
+      fromNodeId,
+      toNodeId,
+      thirdNodeId: '',
+      psyId,
+      formatedOutput: '',
+    })
+
+    return transactions
+  }, [unchangedGraph])
+
+  const load = useCallback(() => {
+    if (!(fromNodeId && toNodeId && psyId)) return
+
+    setTransactionCohort(createTransactions(fromNodeId, toNodeId, psyId))
+  }, [fromNodeId, toNodeId, psyId, createTransactions])
 
   const reset = useCallback(() => {
     if (!graphNameToGraph[graphName]) return
@@ -171,14 +166,23 @@ function Graph() {
 
     setToNodeId(firstConnectedNode.id)
     setPsyId(firstConnectedNode.psys[0]?.id || '')
-    setCurrentStepIndex(0)
-  }, [connectedNodes, setCurrentStepIndex])
+    setCurrentTransactionIndex(0)
+  }, [connectedNodes, setCurrentTransactionIndex])
 
   useEffect(() => {
     if (!toNodeId) return
 
     setPsyId(graph.nodes.find(n => n.id === toNodeId)?.psys[0]?.id || '')
   }, [graph, toNodeId])
+
+  useEffect(() => {
+    if (shouldUseKarmicThirdPartyTransaction) {
+      setThirdNodeId(graph.nodes.filter(n => n.id !== fromNodeId && n.id !== toNodeId)[0]?.id || '')
+    }
+    else {
+      setThirdNodeId('')
+    }
+  }, [shouldUseKarmicThirdPartyTransaction, graph, fromNodeId, toNodeId, setThirdNodeId])
 
   useEffect(() => {
     if (graph.nodes.length < 3) {
@@ -206,7 +210,7 @@ function Graph() {
   return (
     <GraphContext.Provider value={graphContextValue}>
       <TransactionContext.Provider value={transactionContextValue}>
-        <StepsContext.Provider value={stepsContextValue}>
+        <TransactionCohort.Provider value={transactionCohortContextValue}>
           <IsKarmicDeptAllowedContext.Provider value={isKarmicDeptAllowedContextValue}>
             <ShouldUseKarmicThirdPArtyTransaction.Provider value={shouldUseKarmicThirdPartyTransactionContextValue}>
               <IsKarmicDepletionContext.Provider value={isKarmicDepletionContextValue}>
@@ -285,7 +289,7 @@ function Graph() {
               </IsKarmicDepletionContext.Provider>
             </ShouldUseKarmicThirdPArtyTransaction.Provider>
           </IsKarmicDeptAllowedContext.Provider>
-        </StepsContext.Provider>
+        </TransactionCohort.Provider>
       </TransactionContext.Provider>
     </GraphContext.Provider>
   )

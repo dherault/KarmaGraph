@@ -1,14 +1,16 @@
-import { Button, Div, Span } from 'honorable'
+import { Button, Div, MenuItem, Select, Span } from 'honorable'
 import cloneDeep from 'lodash.clonedeep'
-import { useCallback, useContext } from 'react'
+import { useCallback, useContext, useEffect } from 'react'
 
 import GraphContext from '../contexts/GraphContext'
-import StepsContext from '../contexts/StepsContext'
+import TransactionCohortContext from '../contexts/TransactionCohortContext'
 import TransactionContext from '../contexts/TransactionContext'
 import IsKarmicDeptAllowedContext from '../contexts/IsKarmicDeptAllowedContext'
+import ShouldUseKarmicThirdPartyTransactionContext from '../contexts/ShouldUseKarmicThirdPartyTransactionContext'
 import IsKarmicDepletionContext from '../contexts/IsKarmicDepletionContext'
 
 import formatGraph from '../helpers/formatGraph'
+import formatBeings from '../helpers/formatBeings'
 
 import { NodeType, PsyType } from '../types'
 
@@ -19,56 +21,94 @@ function Executor() {
     * CONTEXTS
   -- */
   const { graph, setGraph } = useContext(GraphContext)
-  const { fromNodeId, thirdNodeId } = useContext(TransactionContext)
-  const { steps, setSteps, currentStepIndex, setCurrentStepIndex } = useContext(StepsContext)
+  const { thirdNodeId, setThirdNodeId } = useContext(TransactionContext)
+  const { transactionCohort, setTransactionCohort, currentTransactionIndex, setCurrentTransactionIndex } = useContext(TransactionCohortContext)
   const { isKarmicDeptAllowed } = useContext(IsKarmicDeptAllowedContext)
+  const { shouldUseKarmicThirdPartyTransaction } = useContext(ShouldUseKarmicThirdPartyTransactionContext)
   const { setIsKarmicDepletion } = useContext(IsKarmicDepletionContext)
 
   /* --
     * HANDLERS
   -- */
-  const executePsy = useCallback((goalNode: NodeType, fromNode: NodeType, toNode: NodeType, psy: PsyType) => {
+  const executePsy = useCallback((fromNode: NodeType, toNode: NodeType, thirdNode: NodeType | null, psy: PsyType, cohortNodeHistory: NodeType[]) => {
     const { cost, fun } = psy
-    const alterNodeId = thirdNodeId || fromNode.id
+    const alterFromNodeId = thirdNode ? thirdNode.id : fromNode.id
+    const alterToNodeId = thirdNode ? thirdNode.id : toNode.id
 
-    if (!isKarmicDeptAllowed && (fromNode.karma[alterNodeId] < cost || toNode.karma[fromNode.id] < cost)) return false
+    if (!isKarmicDeptAllowed && (fromNode.karma[alterFromNodeId] < cost || toNode.karma[fromNode.id] < cost)) return false
 
     // Effectuate
-    goalNode.being = fun(goalNode.being) // The cost should be returned by the psy function
+    // The cost should be returned by the psy function
+    const results = fun(...cohortNodeHistory.map(n => n.being))
+
+    cohortNodeHistory.forEach((n, i) => n.being = results[i])
+
     // Give
-    fromNode.karma[alterNodeId] -= cost
-    toNode.karma[alterNodeId] += cost
+    fromNode.karma[alterFromNodeId] -= cost
+    toNode.karma[alterToNodeId] += cost
+
     // Take
-    fromNode.karma[toNode.id] += cost
     toNode.karma[fromNode.id] -= cost
+    fromNode.karma[toNode.id] += cost
+
+    if (thirdNode) {
+      thirdNode.karma[fromNode.id] += cost
+      thirdNode.karma[toNode.id] -= cost
+    }
 
     return true
-  }, [thirdNodeId, isKarmicDeptAllowed])
+  }, [isKarmicDeptAllowed])
 
   const executeStep = useCallback(() => {
-    const step = steps[currentStepIndex]
+    const transaction = transactionCohort[currentTransactionIndex]
 
-    if (!step) return
+    if (!transaction) return
 
+    const { fromNodeId, toNodeId, thirdNodeId, psyId } = transaction
     const nextGraph = cloneDeep(graph)
-    const goalNode = nextGraph.nodes.find(n => n.id === fromNodeId)
-
-    if (!goalNode) return
-
-    const { from, to, psy } = step
-    const fromNode = nextGraph.nodes.find(n => n.id === from)
+    const fromNode = nextGraph.nodes.find(n => n.id === fromNodeId)
 
     if (!fromNode) return
 
-    const toNode = nextGraph.nodes.find(n => n.id === to)
+    const toNode = nextGraph.nodes.find(n => n.id === toNodeId)
 
     if (!toNode) return
 
-    const success = executePsy(goalNode, fromNode, toNode, psy)
+    let thirdNode = null
+
+    if (thirdNodeId) {
+      thirdNode = nextGraph.nodes.find(n => n.id === thirdNodeId)
+
+      if (!thirdNode) return
+    }
+
+    const psy = toNode.psys.find(p => p.id === psyId)
+
+    if (!psy) return
+
+    const cohortNodeHistory: NodeType[] = []
+
+    for (let i = 0; i <= currentTransactionIndex; i++) {
+      const node = nextGraph.nodes.find(n => n.id === transactionCohort[i].fromNodeId)
+
+      if (!node) return
+
+      cohortNodeHistory.push(node)
+    }
+
+    const success = executePsy(fromNode, toNode, thirdNode, psy, cohortNodeHistory)
 
     if (success) {
+      cohortNodeHistory.forEach(n => {
+        const node = nextGraph.nodes.find(node => node.id === n.id)
+
+        if (!node) return
+
+        node.being = n.being
+      })
+
       setGraph(formatGraph(nextGraph))
-      setCurrentStepIndex(currentStepIndex + 1)
+      setCurrentTransactionIndex(currentTransactionIndex + 1)
       setIsKarmicDepletion(false)
     }
     else {
@@ -77,13 +117,30 @@ function Executor() {
       return
     }
 
-    setSteps(steps => steps.map((s, i) => i === currentStepIndex ? { ...s, result: goalNode.being } : s))
-  }, [graph, setGraph, setIsKarmicDepletion, fromNodeId, steps, setSteps, currentStepIndex, setCurrentStepIndex, executePsy])
+    setTransactionCohort(transactionCohort.map((t, i) => i === currentTransactionIndex ? { ...t, formatedOutput: formatBeings(nextGraph) } : t))
+  }, [
+    graph,
+    setGraph,
+    setIsKarmicDepletion,
+    transactionCohort,
+    setTransactionCohort,
+    currentTransactionIndex,
+    setCurrentTransactionIndex,
+    executePsy,
+  ])
 
   const resetSteps = useCallback(() => {
-    setCurrentStepIndex(0)
-    setSteps(steps => steps.map(s => ({ ...s, result: '' })))
-  }, [setCurrentStepIndex, setSteps])
+    setCurrentTransactionIndex(0)
+    setTransactionCohort(steps => steps.map(s => ({ ...s, result: '' })))
+  }, [setCurrentTransactionIndex, setTransactionCohort])
+
+  /* --
+    * EFFECTS
+  -- */
+  // TODO in honorable: export HonorableChangeValueEvent and HonorableChangeCheckedEvent
+  useEffect(() => {
+    setTransactionCohort(transactionCohort => transactionCohort.map((transaction, i) => i === currentTransactionIndex ? { ...transaction, thirdNodeId } : transaction))
+  }, [setTransactionCohort, currentTransactionIndex, thirdNodeId])
 
   /* --
     * RETURN
@@ -95,19 +152,37 @@ function Executor() {
       leftt={0}
       p={1}
     >
-      {steps.map((step, i) => (
+      {transactionCohort.map((transaction, i) => (
         <Div
           xflex="x4"
-          key={step.label}
+          key={transaction.id}
           mt={0.5}
           gap={0.5}
         >
-          <Span visibility={i === currentStepIndex ? 'visible' : 'hidden'}>
+          <Span visibility={i === currentTransactionIndex ? 'visible' : 'hidden'}>
             •
           </Span>
           <Span>
-            {step.from} {'-->'} {step.to} : {step.label} - {step.result || 'upcoming'}
+            {transaction.fromNodeId} {'-->'} {transaction.toNodeId} {i < currentTransactionIndex && transaction.thirdNodeId ? `, ${transaction.thirdNodeId}` : ''} : {transaction.psyId} {transaction.formatedOutput ? `- ${transaction.formatedOutput}` : ''}
           </Span>
+          {shouldUseKarmicThirdPartyTransaction && i === currentTransactionIndex && (
+            <Select
+              value={thirdNodeId}
+              onChange={event => setThirdNodeId(event.target.value)}
+              width={64}
+            >
+              {Object.values(graph.nodes)
+              .filter(node => node.id !== transaction.fromNodeId && node.id !== transaction.toNodeId)
+              .map(node => (
+                <MenuItem
+                  key={node.id}
+                  value={node.id}
+                >
+                  {node.id}
+                </MenuItem>
+              ))}
+            </Select>
+          )}
         </Div>
       ))}
       <Div
@@ -115,12 +190,12 @@ function Executor() {
         mt={1}
         gap={1}
       >
-        {currentStepIndex < steps.length && (
+        {currentTransactionIndex < transactionCohort.length && (
           <Button onClick={executeStep}>
             Execute
           </Button>
         )}
-        {currentStepIndex === steps.length && (
+        {currentTransactionIndex === transactionCohort.length && (
           <Button onClick={resetSteps}>
             Reset
           </Button>

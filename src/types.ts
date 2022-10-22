@@ -19,7 +19,7 @@ export type GraphType = {
 
 export type LedgerType = Record<string, number>
 
-export type FunType = (being: string) => string
+export type FunType = (...being: string[]) => string[]
 
 export type PsyType = {
   id: string
@@ -28,10 +28,13 @@ export type PsyType = {
   fun: FunType
 }
 
-export type StepsType = {
-  label: string
-  from: string
-  to: string
-  psy: PsyType
-  result: string
-}[]
+export type TransactionType = {
+  id: string
+  fromNodeId: string
+  toNodeId: string
+  thirdNodeId: string
+  psyId: string
+  formatedOutput: string
+}
+
+export type TransactionCohortType = TransactionType[]
