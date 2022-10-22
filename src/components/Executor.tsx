@@ -50,7 +50,6 @@ function Executor() {
     if (!goalNode) return
 
     const { from, to, psy } = step
-
     const fromNode = nextGraph.nodes.find(n => n.id === from)
 
     if (!fromNode) return
@@ -60,8 +59,6 @@ function Executor() {
     if (!toNode) return
 
     const success = executePsy(goalNode, fromNode, toNode, psy)
-
-    // console.log('nextGraph', nextGraph)
 
     if (success) {
       setGraph(formatGraph(nextGraph))
@@ -74,9 +71,7 @@ function Executor() {
       return
     }
 
-    const result = goalNode.being
-
-    setSteps(steps => steps.map((s, i) => i === currentStepIndex ? { ...s, result } : s))
+    setSteps(steps => steps.map((s, i) => i === currentStepIndex ? { ...s, result: goalNode.being } : s))
   }, [graph, setGraph, setIsKarmicDepletion, fromNodeId, steps, setSteps, currentStepIndex, setCurrentStepIndex, executePsy])
 
   const resetSteps = useCallback(() => {
