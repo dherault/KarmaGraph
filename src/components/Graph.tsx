@@ -23,18 +23,18 @@ import KarmaMatrixModal from './KarmaMatrixModal'
 const options = {
   physics: {
     barnesHut: {
-      gravitationalConstant: -1000,
-      centralGravity: 0.05,
-      springLength: 200,
+      gravitationalConstant: -1,
+      centralGravity: 0.001,
+      springLength: 300,
       springConstant: 0.0333,
       damping: 0.09,
     },
     repulsion: {
-      centralGravity: 0.05,
-      springLength: 100,
+      centralGravity: 1,
+      springLength: 200,
       springConstant: 1,
-      nodeDistance: 100,
-      damping: 0.09,
+      nodeDistance: 600,
+      damping: 0.05,
     },
   },
 }
