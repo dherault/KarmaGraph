@@ -7,14 +7,14 @@ const graphs: Record<string, GraphType> = {
         id: 'A',
         label: 'A',
         karma: {
-          A: 100,
+          A: 16,
           B: 0,
         },
         being: 'A',
         psys: [
           {
             id: 'PsyA',
-            cost: 10,
+            cost: 1,
             composition: [],
             fun: (x: string) => `${x}A`,
           },
@@ -24,14 +24,14 @@ const graphs: Record<string, GraphType> = {
         id: 'B',
         label: 'B',
         karma: {
-          B: 100,
+          B: 16,
           A: 0,
         },
         being: 'B',
         psys: [
           {
             id: 'PsyB',
-            cost: 10,
+            cost: 1,
             composition: [],
             fun: (x: string) => `${x}B`,
           },
@@ -57,7 +57,7 @@ const graphs: Record<string, GraphType> = {
         id: 'A',
         label: 'A',
         karma: {
-          A: 100,
+          A: 16,
           B: 0,
           C: 0,
         },
@@ -65,7 +65,7 @@ const graphs: Record<string, GraphType> = {
         psys: [
           {
             id: 'PsyA',
-            cost: 10,
+            cost: 1,
             composition: [],
             fun: (x: string) => `${x}A`,
           },
@@ -76,14 +76,14 @@ const graphs: Record<string, GraphType> = {
         label: 'B',
         karma: {
           A: 0,
-          B: 100,
+          B: 16,
           C: 0,
         },
         being: 'B',
         psys: [
           {
             id: 'PsyB',
-            cost: 10,
+            cost: 1,
             composition: [],
             fun: (x: string) => `${x}B`,
           },
@@ -95,13 +95,13 @@ const graphs: Record<string, GraphType> = {
         karma: {
           A: 0,
           B: 0,
-          C: 100,
+          C: 16,
         },
         being: 'C',
         psys: [
           {
             id: 'PsyC',
-            cost: 10,
+            cost: 1,
             composition: [],
             fun: (x: string) => `${x}C`,
           },
@@ -147,7 +147,7 @@ const graphs: Record<string, GraphType> = {
         id: 'A',
         label: 'A',
         karma: {
-          A: 100,
+          A: 16,
           B: 0,
           C: 0,
         },
@@ -155,7 +155,7 @@ const graphs: Record<string, GraphType> = {
         psys: [
           {
             id: 'PsyA',
-            cost: 10,
+            cost: 1,
             composition: ['B:PsyB'],
             fun: (x: string) => `${x}A`,
           },
@@ -166,14 +166,14 @@ const graphs: Record<string, GraphType> = {
         label: 'B',
         karma: {
           A: 0,
-          B: 100,
+          B: 16,
           C: 0,
         },
         being: 'B',
         psys: [
           {
             id: 'PsyB',
-            cost: 10,
+            cost: 1,
             composition: ['C:PsyC'],
             fun: (x: string) => `${x}B`,
           },
@@ -185,13 +185,13 @@ const graphs: Record<string, GraphType> = {
         karma: {
           A: 0,
           B: 0,
-          C: 100,
+          C: 16,
         },
         being: 'C',
         psys: [
           {
             id: 'PsyC',
-            cost: 10,
+            cost: 1,
             composition: [],
             fun: (x: string) => `${x}C`,
           },
@@ -227,7 +227,7 @@ const graphs: Record<string, GraphType> = {
         id: 'A',
         label: 'A',
         karma: {
-          A: 100,
+          A: 16,
           B: 0,
           C: 0,
         },
@@ -235,7 +235,7 @@ const graphs: Record<string, GraphType> = {
         psys: [
           {
             id: 'PsyA',
-            cost: 10,
+            cost: 1,
             composition: ['B:PsyB'],
             fun: (x: string) => `${x}A`,
           },
@@ -246,14 +246,14 @@ const graphs: Record<string, GraphType> = {
         label: 'B',
         karma: {
           A: 0,
-          B: 100,
+          B: 16,
           C: 0,
         },
         being: 'B',
         psys: [
           {
             id: 'PsyB',
-            cost: 10,
+            cost: 1,
             composition: ['C:PsyC1', 'C:PsyC2'],
             fun: (x: string) => `${x}B`,
           },
@@ -265,19 +265,19 @@ const graphs: Record<string, GraphType> = {
         karma: {
           A: 0,
           B: 0,
-          C: 100,
+          C: 16,
         },
         being: 'C',
         psys: [
           {
             id: 'PsyC1',
-            cost: 10,
+            cost: 1,
             composition: [],
             fun: (x: string) => `${x}C1`,
           },
           {
             id: 'PsyC2',
-            cost: 10,
+            cost: 1,
             composition: [],
             fun: (x: string) => `${x}C2`,
           },
@@ -304,6 +304,69 @@ const graphs: Record<string, GraphType> = {
         id: '4',
         from: 'C',
         to: 'B',
+      },
+    ],
+  },
+  'Simple 3rd party': {
+    nodes: [
+      {
+        id: 'A',
+        label: 'A',
+        karma: {
+          A: 16,
+          B: 8,
+          C: 8,
+        },
+        being: 'A',
+        psys: [
+          {
+            id: 'PsyA',
+            cost: 1,
+            composition: [],
+            fun: (x: string) => `${x}A`,
+          },
+        ],
+      },
+      {
+        id: 'B',
+        label: 'B',
+        karma: {
+          A: 8,
+          B: 16,
+          C: 8,
+        },
+        being: 'B',
+        psys: [
+          {
+            id: 'PsyB',
+            cost: 1,
+            composition: [],
+            fun: (x: string) => `${x}B`,
+          },
+        ],
+      },
+      {
+        id: 'C',
+        label: 'C',
+        karma: {
+          A: 8,
+          B: 8,
+          C: 16,
+        },
+        being: 'C',
+        psys: [],
+      },
+    ],
+    edges: [
+      {
+        id: '1',
+        from: 'A',
+        to: 'B',
+      },
+      {
+        id: '2',
+        from: 'B',
+        to: 'A',
       },
     ],
   },

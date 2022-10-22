@@ -5,6 +5,8 @@ import { useCallback, useContext } from 'react'
 import GraphContext from '../contexts/GraphContext'
 import StepsContext from '../contexts/StepsContext'
 import TransactionContext from '../contexts/TransactionContext'
+import IsKarmicDeptAllowedContext from '../contexts/IsKarmicDeptAllowedContext'
+import IsKarmicThirdPartyTransactionAllowedContext from '../contexts/IsKarmicThirdPartyTransactionAllowedContext'
 import IsKarmicDepletionContext from '../contexts/IsKarmicDepletionContext'
 
 import formatGraph from '../helpers/formatGraph'
@@ -15,13 +17,15 @@ function Executor() {
   const { graph, setGraph } = useContext(GraphContext)
   const { fromNodeId } = useContext(TransactionContext)
   const { steps, setSteps, currentStepIndex, setCurrentStepIndex } = useContext(StepsContext)
+  const { isKarmicDeptAllowed } = useContext(IsKarmicDeptAllowedContext)
+  const { isKarmicThirdPartyTransactionAllowed } = useContext(IsKarmicThirdPartyTransactionAllowedContext)
   const { setIsKarmicDepletion } = useContext(IsKarmicDepletionContext)
 
   const executePsy = useCallback((goalNode: NodeType, fromNode: NodeType, toNode: NodeType, psy: PsyType) => {
     const { cost, fun } = psy
-    const fromKarma = fromNode.karma[fromNode.id]
 
-    if (fromKarma < cost) return false
+    if (fromNode.karma[fromNode.id] < cost) return false
+    if (!isKarmicDeptAllowed && toNode.karma[fromNode.id] < cost) return false
 
     fromNode.karma[fromNode.id] -= cost
     fromNode.karma[toNode.id] += cost
@@ -30,9 +34,10 @@ function Executor() {
     goalNode.being = fun(goalNode.being)
 
     return true
-  }, [])
+  }, [isKarmicDeptAllowed])
 
   const executeStep = useCallback(() => {
+    console.log('currentStepIndex', currentStepIndex)
     const step = steps[currentStepIndex]
 
     if (!step) return

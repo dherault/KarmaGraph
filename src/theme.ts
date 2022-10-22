@@ -165,4 +165,11 @@ export default mergeTheme(defaultTheme, {
       },
     ],
   },
+  Switch: {
+    Control: [
+      ({ checked }: any) => !checked && {
+        backgroundColor: 'grey.100',
+      },
+    ],
+  },
 })
