@@ -1,4 +1,4 @@
-import { Button, Div } from 'honorable'
+import { Button, Div, Span } from 'honorable'
 import cloneDeep from 'lodash.clonedeep'
 import { useCallback, useContext } from 'react'
 
@@ -27,17 +27,24 @@ function Executor() {
 
     if (!isKarmicDeptAllowed && (fromNode.karma[alterNodeId] < cost || toNode.karma[fromNode.id] < cost)) return false
 
+    // console.log('alterNodeId', alterNodeId)
+    // console.log('toNode.karma[alterNodeId]', toNode.karma[alterNodeId], toNode.karma)
+
+    // Give
     fromNode.karma[alterNodeId] -= cost
-    fromNode.karma[toNode.id] += cost
     toNode.karma[alterNodeId] += cost
+    // Take
+    fromNode.karma[toNode.id] += cost
     toNode.karma[fromNode.id] -= cost
+    // Effectuate
     goalNode.being = fun(goalNode.being)
+
+    // console.log('toNode.karma[alterNodeId]', toNode.karma[alterNodeId], toNode.karma)
 
     return true
   }, [thirdNodeId, isKarmicDeptAllowed])
 
   const executeStep = useCallback(() => {
-    console.log('currentStepIndex', currentStepIndex)
     const step = steps[currentStepIndex]
 
     if (!step) return
@@ -91,10 +98,17 @@ function Executor() {
     >
       {steps.map((step, i) => (
         <Div
+          xflex="x4"
           key={step.label}
           mt={0.5}
+          gap={0.5}
         >
-          {i === currentStepIndex ? '+' : '-'} {step.from} {'-->'} {step.to} : {step.label} - {step.result || 'upcoming'}
+          <Span visibility={i === currentStepIndex ? 'visible' : 'hidden'}>
+            •
+          </Span>
+          <Span>
+            {step.from} {'-->'} {step.to} : {step.label} - {step.result || 'upcoming'}
+          </Span>
         </Div>
       ))}
       <Div
