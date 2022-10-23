@@ -1,6 +1,7 @@
-import { Button, Div, MenuItem, Select, Span } from 'honorable'
-import cloneDeep from 'lodash.clonedeep'
 import { useCallback, useContext, useEffect } from 'react'
+import { Button, Div, DivProps, H2, MenuItem, Select, Span } from 'honorable'
+import cloneDeep from 'lodash.clonedeep'
+import { MdPlaylistPlay, MdReplay } from 'react-icons/md'
 
 import GraphContext from '../contexts/GraphContext'
 import TransactionCohortContext from '../contexts/TransactionCohortContext'
@@ -18,7 +19,7 @@ import { NodeType, PsyType } from '../types'
 import KarmicDepletionWarning from './KarmicDepletionWarning'
 import Transaction from './Transaction'
 
-function Executor() {
+function Executor(props: DivProps) {
   /* --
     * CONTEXTS
   -- */
@@ -28,7 +29,7 @@ function Executor() {
   const { setTransactionsHistory } = useContext(TransactionsHistoryContext)
   const { isKarmicDeptAllowed } = useContext(IsKarmicDeptAllowedContext)
   const { shouldUseKarmicThirdPartyTransaction } = useContext(ShouldUseKarmicThirdPartyTransactionContext)
-  const { setIsKarmicDepletion } = useContext(IsKarmicDepletionContext)
+  const { isKarmicDepletion, setIsKarmicDepletion } = useContext(IsKarmicDepletionContext)
 
   /* --
     * HANDLERS
@@ -173,29 +174,59 @@ function Executor() {
   -- */
   return (
     <Div
-      position="absolute"
-      bottom={0}
-      leftt={0}
+      height="100%"
+      overflow="auto"
       p={1}
+      {...props}
     >
-      {transactionCohort.map((transaction, i) => (
-        <Div
-          xflex="x4"
-          key={transaction.id}
-          mt={0.5}
-          gap={0.5}
-        >
-          <Span visibility={i === currentTransactionIndex ? 'visible' : 'hidden'}>
-            •
-          </Span>
-          <Transaction transaction={transaction} />
-          {shouldUseKarmicThirdPartyTransaction && i === currentTransactionIndex && (
-            <Select
-              value={thirdNodeId}
-              onChange={event => setThirdNodeId(event.target.value)}
-              width={64}
+      <Div
+        xflex="x5b"
+        gap={1}
+      >
+        <H2>
+          Cohort
+        </H2>
+        {currentTransactionIndex < transactionCohort.length && (
+          <Button onClick={executeStep}>
+            <MdPlaylistPlay />
+          </Button>
+        )}
+        {currentTransactionIndex === transactionCohort.length && (
+          <Button onClick={resetSteps}>
+            <MdReplay />
+          </Button>
+        )}
+      </Div>
+      <Div mt={0.5}>
+        <KarmicDepletionWarning />
+      </Div>
+      <Div
+        xflex="y2s"
+        gap={0.5}
+        mt={0.5}
+      >
+        {transactionCohort.map((transaction, i) => (
+          <Div
+            xflex="x4"
+            key={transaction.id}
+            mt={0.5}
+            gap={0.5}
+          >
+            <Span
+              color={isKarmicDepletion ? 'danger' : 'success'}
+              visibility={i === currentTransactionIndex ? 'visible' : 'hidden'}
             >
-              {Object.values(graph.nodes)
+              •
+            </Span>
+            <Transaction transaction={transaction} />
+            {shouldUseKarmicThirdPartyTransaction && i === currentTransactionIndex && (
+              <Select
+                value={thirdNodeId}
+                onChange={event => setThirdNodeId(event.target.value)}
+                width="unset"
+                minWidth="unset" // TODO in honorable
+              >
+                {Object.values(graph.nodes)
               .filter(node => node.id !== transaction.fromNodeId && node.id !== transaction.toNodeId)
               .map(node => (
                 <MenuItem
@@ -205,26 +236,10 @@ function Executor() {
                   {node.id}
                 </MenuItem>
               ))}
-            </Select>
-          )}
-        </Div>
-      ))}
-      <Div
-        xflex="x4"
-        mt={1}
-        gap={1}
-      >
-        {currentTransactionIndex < transactionCohort.length && (
-          <Button onClick={executeStep}>
-            Execute
-          </Button>
-        )}
-        {currentTransactionIndex === transactionCohort.length && (
-          <Button onClick={resetSteps}>
-            Reset
-          </Button>
-        )}
-        <KarmicDepletionWarning />
+              </Select>
+            )}
+          </Div>
+        ))}
       </Div>
     </Div>
   )

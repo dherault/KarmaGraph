@@ -16,16 +16,18 @@ function TransactionsHistory() {
       maxWidth="100%"
       maxHeight="100%"
       p={1}
-      gap={1}
+      gap={0.5}
     >
-      <H2 mt={0.25}>
+      <H2
+        mt={0.25}
+        mb={0.5}
+      >
         History
       </H2>
       {transactionsHistory.map(transaction => (
         <Transaction
           key={transaction.id}
           transaction={transaction}
-          mt={1}
         />
       ))}
     </Div>

@@ -123,6 +123,10 @@ export default mergeTheme(defaultTheme, {
     red,
     grey,
     pink,
+    info: 'blue.500',
+    success: 'green.500',
+    warning: 'yellow.500',
+    danger: 'red.500',
     gold: 'linear-gradient(145deg, rgba(239,202,0,1) 0%, rgba(209,159,0,1) 45%, rgba(209,159,0,1) 55%, rgba(239,202,0,1) 100%)',
     rainbow: 'linear-gradient(180deg,hsla(0,0%,100%,.2),hsla(0,0%,100%,.2)),linear-gradient(145deg,#0fa,#0af 25%,#9f6eff 50%,#fd66cb 75%,#fa0)',
   },
@@ -145,6 +149,16 @@ export default mergeTheme(defaultTheme, {
       borderRadius: borderRadii[borderRadius as keyof typeof borderRadii],
     },
   ],
+  // TODO in honorable
+  Button: {
+    Children: [
+      {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      },
+    ],
+  },
   Ul: {
     Root: [
       {

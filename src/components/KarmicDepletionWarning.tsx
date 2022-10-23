@@ -9,7 +9,7 @@ function KarmicDepletionWarning() {
   if (!isKarmicDepletion) return null
 
   return (
-    <Div color="red.500">
+    <Div color="danger">
       Karmic depletion!
     </Div>
   )

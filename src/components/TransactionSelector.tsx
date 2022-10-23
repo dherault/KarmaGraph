@@ -1,4 +1,4 @@
-import { Div, MenuItem, Select } from 'honorable'
+import { Div, DivProps, MenuItem, Select } from 'honorable'
 import { useContext } from 'react'
 
 import GraphContext from '../contexts/GraphContext'
@@ -6,12 +6,12 @@ import GraphContext from '../contexts/GraphContext'
 import TransactionContext from '../contexts/TransactionContext'
 import { NodeType } from '../types'
 
-type TransactionSelectorProps = {
+type TransactionSelectorProps = DivProps & {
   connectedNodes: NodeType[]
   toNode: NodeType | undefined
 }
 
-function TransactionSelector({ connectedNodes, toNode }: TransactionSelectorProps) {
+function TransactionSelector({ connectedNodes, toNode, ...props }: TransactionSelectorProps) {
   const { graph } = useContext(GraphContext)
   const {
     fromNodeId,
@@ -25,16 +25,14 @@ function TransactionSelector({ connectedNodes, toNode }: TransactionSelectorProp
   return (
     <Div
       xflex="x41"
-      position="absolute"
-      top={0}
-      right={0}
-      p={1}
       gap={1}
+      {...props}
     >
       <Select
         value={fromNodeId}
         onChange={event => setFromNodeId(event.target.value)}
-        width={64}
+        width="unset"
+        minWidth="unset"
       >
         {Object.values(graph.nodes).map(node => (
           <MenuItem
@@ -49,7 +47,8 @@ function TransactionSelector({ connectedNodes, toNode }: TransactionSelectorProp
         <Select
           value={toNodeId}
           onChange={event => setToNodeId(event.target.value)}
-          width={64}
+          width="unset"
+          minWidth="unset"
         >
           {connectedNodes.map(node => (
             <MenuItem
@@ -65,7 +64,8 @@ function TransactionSelector({ connectedNodes, toNode }: TransactionSelectorProp
         <Select
           value={psyId}
           onChange={event => setPsyId(event.target.value)}
-          width={64}
+          width="unset"
+          minWidth="unset"
         >
           {toNode.psys.map(psy => (
             <MenuItem

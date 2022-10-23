@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Div, MenuItem, Select, Switch } from 'honorable'
 import * as vis from 'vis-network'
+import { MdOutlineGridOn } from 'react-icons/md'
 
 import cloneDeep from 'lodash.clonedeep'
 
@@ -227,6 +228,7 @@ function Graph() {
                         position="absolute"
                         top={0}
                         left={0}
+                        right={0}
                         p={1}
                         gap={1}
                       >
@@ -247,8 +249,12 @@ function Graph() {
                               </MenuItem>
                             ))}
                           </Select>
+                          <TransactionSelector
+                            connectedNodes={connectedNodes}
+                            toNode={toNode}
+                          />
                           <Button onClick={() => setIsKarmaMatrixModalOpen(true)}>
-                            Matrix
+                            <MdOutlineGridOn />
                           </Button>
                           <Button onClick={reset}>
                             Reset
@@ -274,18 +280,22 @@ function Graph() {
                           </Switch>
                         </Div>
                       </Div>
-                      <TransactionSelector
-                        connectedNodes={connectedNodes}
-                        toNode={toNode}
-                      />
-                      <Executor />
                     </Div>
                     <Div
+                      xflex="y2s"
                       width="25vw"
                       height="100vh"
                       borderLeft="1px solid border"
                     >
-                      <TransactionsHistory />
+                      <Div height="25vh">
+                        <Executor />
+                      </Div>
+                      <Div
+                        height="75vh"
+                        borderTop="1px solid border"
+                      >
+                        <TransactionsHistory />
+                      </Div>
                     </Div>
                   </Div>
                   <KarmaMatrixModal
