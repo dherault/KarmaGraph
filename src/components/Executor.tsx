@@ -5,6 +5,7 @@ import { useCallback, useContext, useEffect } from 'react'
 import GraphContext from '../contexts/GraphContext'
 import TransactionCohortContext from '../contexts/TransactionCohortContext'
 import TransactionContext from '../contexts/TransactionContext'
+import TransactionsHistoryContext from '../contexts/TransactionsHistoryContext'
 import IsKarmicDeptAllowedContext from '../contexts/IsKarmicDeptAllowedContext'
 import ShouldUseKarmicThirdPartyTransactionContext from '../contexts/ShouldUseKarmicThirdPartyTransactionContext'
 import IsKarmicDepletionContext from '../contexts/IsKarmicDepletionContext'
@@ -15,6 +16,7 @@ import formatBeings from '../helpers/formatBeings'
 import { NodeType, PsyType } from '../types'
 
 import KarmicDepletionWarning from './KarmicDepletionWarning'
+import Transaction from './Transaction'
 
 function Executor() {
   /* --
@@ -23,6 +25,7 @@ function Executor() {
   const { graph, setGraph } = useContext(GraphContext)
   const { thirdNodeId, setThirdNodeId } = useContext(TransactionContext)
   const { transactionCohort, setTransactionCohort, currentTransactionIndex, setCurrentTransactionIndex } = useContext(TransactionCohortContext)
+  const { setTransactionsHistory } = useContext(TransactionsHistoryContext)
   const { isKarmicDeptAllowed } = useContext(IsKarmicDeptAllowedContext)
   const { shouldUseKarmicThirdPartyTransaction } = useContext(ShouldUseKarmicThirdPartyTransactionContext)
   const { setIsKarmicDepletion } = useContext(IsKarmicDepletionContext)
@@ -117,21 +120,25 @@ function Executor() {
       return
     }
 
-    setTransactionCohort(transactionCohort.map((t, i) => i === currentTransactionIndex ? { ...t, formatedOutput: formatBeings(nextGraph) } : t))
+    const formatedOutput = formatBeings(nextGraph)
+
+    setTransactionCohort(transactionCohort.map((t, i) => i === currentTransactionIndex ? { ...t, formatedOutput } : t))
+    setTransactionsHistory(transactions => [...transactions, { ...transaction, formatedOutput }])
   }, [
     graph,
     setGraph,
     setIsKarmicDepletion,
-    transactionCohort,
-    setTransactionCohort,
     currentTransactionIndex,
     setCurrentTransactionIndex,
+    transactionCohort,
+    setTransactionCohort,
+    setTransactionsHistory,
     executePsy,
   ])
 
   const resetSteps = useCallback(() => {
     setCurrentTransactionIndex(0)
-    setTransactionCohort(steps => steps.map(s => ({ ...s, result: '' })))
+    setTransactionCohort(transactionCohort => transactionCohort.map(t => ({ ...t, formatedOutput: '' })))
   }, [setCurrentTransactionIndex, setTransactionCohort])
 
   /* --
@@ -141,6 +148,25 @@ function Executor() {
   useEffect(() => {
     setTransactionCohort(transactionCohort => transactionCohort.map((transaction, i) => i === currentTransactionIndex ? { ...transaction, thirdNodeId } : transaction))
   }, [setTransactionCohort, currentTransactionIndex, thirdNodeId])
+
+  useEffect(() => {
+    if (shouldUseKarmicThirdPartyTransaction) {
+      const transaction = transactionCohort[currentTransactionIndex]
+
+      if (!transaction) return
+
+      setThirdNodeId(transaction ? graph.nodes.filter(n => n.id !== transaction.fromNodeId && n.id !== transaction.toNodeId)[0]?.id || '' : '')
+    }
+    else {
+      setThirdNodeId('')
+    }
+  }, [
+    shouldUseKarmicThirdPartyTransaction,
+    transactionCohort,
+    currentTransactionIndex,
+    graph,
+    setThirdNodeId,
+  ])
 
   /* --
     * RETURN
@@ -162,9 +188,7 @@ function Executor() {
           <Span visibility={i === currentTransactionIndex ? 'visible' : 'hidden'}>
             •
           </Span>
-          <Span>
-            {transaction.fromNodeId} {'-->'} {transaction.toNodeId} {i < currentTransactionIndex && transaction.thirdNodeId ? `, ${transaction.thirdNodeId}` : ''} : {transaction.psyId} {transaction.formatedOutput ? `- ${transaction.formatedOutput}` : ''}
-          </Span>
+          <Transaction transaction={transaction} />
           {shouldUseKarmicThirdPartyTransaction && i === currentTransactionIndex && (
             <Select
               value={thirdNodeId}

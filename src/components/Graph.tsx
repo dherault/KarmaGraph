@@ -10,12 +10,14 @@ import graphNameToGraph from '../graphs'
 import GraphContext, { GraphContextType } from '../contexts/GraphContext'
 import TransactionCohort, { TransactionCohortContextType } from '../contexts/TransactionCohortContext'
 import TransactionContext, { TransactionContextType } from '../contexts/TransactionContext'
+import TransactionsHistoryContext, { TransactionsHistoryContextType } from '../contexts/TransactionsHistoryContext'
 import IsKarmicDeptAllowedContext, { IsKarmicDeptAllowedContextType } from '../contexts/IsKarmicDeptAllowedContext'
 import ShouldUseKarmicThirdPArtyTransaction, { ShouldUseKarmicThirdPartyTransactionContextType } from '../contexts/ShouldUseKarmicThirdPartyTransactionContext'
 import IsKarmicDepletionContext, { IsKarmicDepletionContextType } from '../contexts/IsKarmicDepletionContext'
 
 import formatGraph from '../helpers/formatGraph'
 
+import TransactionsHistory from './TransactionsHistory'
 import TransactionSelector from './TransactionSelector'
 import Executor from './Executor'
 import KarmaMatrixModal from './KarmaMatrixModal'
@@ -53,6 +55,7 @@ function Graph() {
   const [thirdNodeId, setThirdNodeId] = useState<string>('')
   const [psyId, setPsyId] = useState<string>('')
   const [transactionCohort, setTransactionCohort] = useState<TransactionCohortType>([])
+  const [transactionsHistory, setTransactionsHistory] = useState<TransactionType[]>([])
   const [currentTransactionIndex, setCurrentTransactionIndex] = useState(0)
   const [isKarmicDeptAllowed, setIsKarmicDeptAllowed] = useState(false)
   const [shouldUseKarmicThirdPartyTransaction, setShouldUseKarmicThirdPartyTransaction] = useState(true)
@@ -74,6 +77,7 @@ function Graph() {
     setPsyId,
   }), [fromNodeId, toNodeId, thirdNodeId, psyId])
   const transactionCohortContextValue = useMemo<TransactionCohortContextType>(() => ({ transactionCohort, setTransactionCohort, currentTransactionIndex, setCurrentTransactionIndex }), [transactionCohort, currentTransactionIndex])
+  const transactionsHistoryContextValue = useMemo<TransactionsHistoryContextType>(() => ({ transactionsHistory, setTransactionsHistory }), [transactionsHistory])
   const isKarmicDeptAllowedContextValue = useMemo<IsKarmicDeptAllowedContextType>(() => ({ isKarmicDeptAllowed, setIsKarmicDeptAllowed }), [isKarmicDeptAllowed])
   const shouldUseKarmicThirdPartyTransactionContextValue = useMemo<ShouldUseKarmicThirdPartyTransactionContextType>(() => ({ shouldUseKarmicThirdPartyTransaction, setShouldUseKarmicThirdPartyTransaction }), [shouldUseKarmicThirdPartyTransaction])
   const isKarmicDepletionContextValue = useMemo<IsKarmicDepletionContextType>(() => ({ isKarmicDepletion, setIsKarmicDepletion }), [isKarmicDepletion])
@@ -135,6 +139,7 @@ function Graph() {
 
     setGraph(nextGraph)
     setUnchangedGraph(nextGraph)
+    setTransactionsHistory([])
   }, [graphName])
 
   /* --
@@ -176,15 +181,6 @@ function Graph() {
   }, [graph, toNodeId])
 
   useEffect(() => {
-    if (shouldUseKarmicThirdPartyTransaction) {
-      setThirdNodeId(graph.nodes.filter(n => n.id !== fromNodeId && n.id !== toNodeId)[0]?.id || '')
-    }
-    else {
-      setThirdNodeId('')
-    }
-  }, [shouldUseKarmicThirdPartyTransaction, graph, fromNodeId, toNodeId, setThirdNodeId])
-
-  useEffect(() => {
     if (graph.nodes.length < 3) {
       setShouldUseKarmicThirdPartyTransaction(false)
     }
@@ -211,84 +207,95 @@ function Graph() {
     <GraphContext.Provider value={graphContextValue}>
       <TransactionContext.Provider value={transactionContextValue}>
         <TransactionCohort.Provider value={transactionCohortContextValue}>
-          <IsKarmicDeptAllowedContext.Provider value={isKarmicDeptAllowedContextValue}>
-            <ShouldUseKarmicThirdPArtyTransaction.Provider value={shouldUseKarmicThirdPartyTransactionContextValue}>
-              <IsKarmicDepletionContext.Provider value={isKarmicDepletionContextValue}>
-                <Div
-                  postion="relative"
-                  width="100vw"
-                  height="100vh"
-                >
-                  <Div
-                    ref={containerRef}
-                    width="100vw"
-                    height="100vh"
-                  />
-                  <Div
-                    xflex="y11"
-                    position="absolute"
-                    top={0}
-                    left={0}
-                    p={1}
-                    gap={1}
-                  >
+          <TransactionsHistoryContext.Provider value={transactionsHistoryContextValue}>
+            <IsKarmicDeptAllowedContext.Provider value={isKarmicDeptAllowedContextValue}>
+              <ShouldUseKarmicThirdPArtyTransaction.Provider value={shouldUseKarmicThirdPartyTransactionContextValue}>
+                <IsKarmicDepletionContext.Provider value={isKarmicDepletionContextValue}>
+                  <Div xflex="x2s">
                     <Div
-                      xflex="x41"
-                      gap={1}
+                      position="relative"
+                      width="75vw"
+                      height="100vh"
                     >
-                      <Select
-                        value={graphName}
-                        onChange={event => setGraphName(event.target.value)}
+                      <Div
+                        ref={containerRef}
+                        width="100%"
+                        height="100%"
+                      />
+                      <Div
+                        xflex="y11"
+                        position="absolute"
+                        top={0}
+                        left={0}
+                        p={1}
+                        gap={1}
                       >
-                        {Object.keys(graphNameToGraph).map(graphName => (
-                          <MenuItem
-                            key={graphName}
+                        <Div
+                          xflex="x41"
+                          gap={1}
+                        >
+                          <Select
                             value={graphName}
+                            onChange={event => setGraphName(event.target.value)}
                           >
-                            {graphName}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      <Button onClick={() => setIsKarmaMatrixModalOpen(true)}>
-                        Matrix
-                      </Button>
-                      <Button onClick={reset}>
-                        Reset
-                      </Button>
+                            {Object.keys(graphNameToGraph).map(graphName => (
+                              <MenuItem
+                                key={graphName}
+                                value={graphName}
+                              >
+                                {graphName}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                          <Button onClick={() => setIsKarmaMatrixModalOpen(true)}>
+                            Matrix
+                          </Button>
+                          <Button onClick={reset}>
+                            Reset
+                          </Button>
+                        </Div>
+                        <Div
+                          xflex="y11"
+                          gap={1}
+                        >
+                          {graph.nodes.length >= 3 && (
+                            <Switch
+                              checked={shouldUseKarmicThirdPartyTransaction}
+                              onChange={event => setShouldUseKarmicThirdPartyTransaction(event.target.checked)}
+                            >
+                              Use 3rd party for next transaction
+                            </Switch>
+                          )}
+                          <Switch
+                            checked={isKarmicDeptAllowed}
+                            onChange={event => setIsKarmicDeptAllowed(event.target.checked)}
+                          >
+                            Allow karmic dept
+                          </Switch>
+                        </Div>
+                      </Div>
+                      <TransactionSelector
+                        connectedNodes={connectedNodes}
+                        toNode={toNode}
+                      />
+                      <Executor />
                     </Div>
                     <Div
-                      xflex="y11"
-                      gap={1}
+                      width="25vw"
+                      height="100vh"
+                      borderLeft="1px solid border"
                     >
-                      {graph.nodes.length >= 3 && (
-                        <Switch
-                          checked={shouldUseKarmicThirdPartyTransaction}
-                          onChange={event => setShouldUseKarmicThirdPartyTransaction(event.target.checked)}
-                        >
-                          Use 3rd party for next transaction
-                        </Switch>
-                      )}
-                      <Switch
-                        checked={isKarmicDeptAllowed}
-                        onChange={event => setIsKarmicDeptAllowed(event.target.checked)}
-                      >
-                        Allow karmic dept
-                      </Switch>
+                      <TransactionsHistory />
                     </Div>
                   </Div>
-                  <TransactionSelector
-                    connectedNodes={connectedNodes}
-                    toNode={toNode}
+                  <KarmaMatrixModal
+                    open={isKarmaMatrixModalOpen}
+                    onClose={() => setIsKarmaMatrixModalOpen(false)}
                   />
-                  <Executor />
-                </Div>
-                <KarmaMatrixModal
-                  open={isKarmaMatrixModalOpen}
-                  onClose={() => setIsKarmaMatrixModalOpen(false)}
-                />
-              </IsKarmicDepletionContext.Provider>
-            </ShouldUseKarmicThirdPArtyTransaction.Provider>
-          </IsKarmicDeptAllowedContext.Provider>
+                </IsKarmicDepletionContext.Provider>
+              </ShouldUseKarmicThirdPArtyTransaction.Provider>
+            </IsKarmicDeptAllowedContext.Provider>
+          </TransactionsHistoryContext.Provider>
         </TransactionCohort.Provider>
       </TransactionContext.Provider>
     </GraphContext.Provider>

@@ -94,6 +94,7 @@ const pink = {
 
 export default mergeTheme(defaultTheme, {
   name: 'KarmaGraph',
+  // mode: 'dark',
   stylesheet: {
     html: [
       {
