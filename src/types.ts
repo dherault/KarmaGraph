@@ -8,8 +8,8 @@ export type NodeType = {
 
 export type EdgeType = {
   id: string
-  from: string
-  to: string
+  source: string
+  target: string
 }
 
 export type GraphType = {

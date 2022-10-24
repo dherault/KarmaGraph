@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Div, MenuItem, Select, Switch } from 'honorable'
-import * as vis from 'vis-network'
-import { MdOutlineGridOn } from 'react-icons/md'
-
+import cytoscape from 'cytoscape'
+import fcose from 'cytoscape-fcose'
 import cloneDeep from 'lodash.clonedeep'
+import { MdOutlineGridOn } from 'react-icons/md'
 
 import { TransactionCohortType, TransactionType } from '../types'
 import graphNameToGraph from '../graphs'
@@ -23,31 +23,14 @@ import TransactionSelector from './TransactionSelector'
 import Executor from './Executor'
 import KarmaMatrixModal from './KarmaMatrixModal'
 
-const options = {
-  physics: {
-    barnesHut: {
-      gravitationalConstant: -1,
-      centralGravity: 0.001,
-      springLength: 300,
-      springConstant: 0.0333,
-      damping: 0.09,
-    },
-    repulsion: {
-      centralGravity: 1,
-      springLength: 200,
-      springConstant: 1,
-      nodeDistance: 600,
-      damping: 0.05,
-    },
-  },
-}
+cytoscape.use(fcose)
 
 function Graph() {
   /* --
     * STATE
   -- */
   const containerRef = useRef<HTMLDivElement>(null)
-  const [network, setNetwork] = useState<vis.Network | null>(null)
+  const [network, setNetwork] = useState<cytoscape.Core | null>(null)
   const [graphName, setGraphName] = useState(Object.keys(graphNameToGraph)[0])
   const [graph, setGraph] = useState(formatGraph(graphNameToGraph[graphName]))
   const [unchangedGraph, setUnchangedGraph] = useState(cloneDeep(graph))
@@ -89,9 +72,9 @@ function Graph() {
   const connectedNodes = useMemo(() => {
     if (!unchangedGraph) return []
 
-    const connectedEdges = unchangedGraph.edges.filter(e => e.from === fromNodeId)
+    const connectedEdges = unchangedGraph.edges.filter(e => e.source === fromNodeId)
 
-    return unchangedGraph.nodes.filter(n => connectedEdges.some(e => e.to === n.id))
+    return unchangedGraph.nodes.filter(n => connectedEdges.some(e => e.target === n.id))
   }, [unchangedGraph, fromNodeId])
 
   const toNode = useMemo(() => connectedNodes.find(n => n.id === toNodeId), [connectedNodes, toNodeId])
@@ -190,14 +173,25 @@ function Graph() {
   useEffect(() => {
     if (!containerRef.current) return
 
-    setNetwork(new vis.Network(containerRef.current, graph, options))
+    const network = cytoscape({
+      container: containerRef.current,
+    })
+
+    network.layout({ name: 'fcose' }).run()
+
+    setNetwork(network)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (!network) return
 
-    network.setData(graph)
+    network.elements().remove()
+    graph.nodes.forEach(data => network.add({ group: 'nodes', data }))
+    graph.edges.forEach(data => network.add({ group: 'edges', data }))
+
+    network.layout({ name: 'fcose' }).run()
+
     setIsKarmicDepletion(false)
   }, [network, graph])
 
